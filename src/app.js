@@ -53,7 +53,7 @@ app.post('/participants', async (req, res) => {
             time: dayjs().format('HH:mm:ss')
         }
 
-
+        console.log(entry)
 
         const existName = await db.collection('participants').findOne({ name })
 
@@ -80,7 +80,7 @@ app.get('/participants', async (req, res) => {
 
     const participants = await db.collection("participants").find().toArray()
 
-    if (participants.length === 0) return res.send({})
+    if (participants.length === 0) return res.send(participants)
 
     try {
 
@@ -102,14 +102,14 @@ app.post('/messages', async (req, res) => {
         return res.status(422).send(errors);
     }
 
-    // const existName = await db.collection('message').findOne({ to })
-    // if(!existName) return res.status(422).send("Não encontrado")
+    const existName = await db.collection('messages').findOne({ to })
+    if (!existName) return res.status(422).send("Não encontrado")
 
     try {
 
         const newMessage = {
-            text,
             to,
+            text,
             type,
             time: dayjs().format('HH:mm:ss')
         }
