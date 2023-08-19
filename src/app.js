@@ -2,6 +2,9 @@ import express, { json } from "express"
 import cors from "cors"
 import { MongoClient } from "mongodb"
 import dotenv from "dotenv"
+import dayjs from "dayjs"
+import Joi from "joi"
+
 
 const app = express()
 app.use(cors())
@@ -19,25 +22,53 @@ mongoClient.connect()
     .catch((erro) => console.log(erro))
 
 
+const participantSchema = Joi.object({
+    name: Joi.string().required(),
+
+})
+
+const messageSchema = Joi.object({
+    to: Joi.string().required(),
+    text: Joi.string().required(),
+    type: Joi.string().required()
+})
+
 app.post('/participants', async (req, res) => {
 
     const { name } = req.body
 
+    const validation = participantSchema.validate(req.body, { abortEarly: false })
+    if (validation.error) {
+        const errors = validation.error.details.map((det) => det.message);
+        return res.status(422).send(errors);
+    }
+
     try {
+
+        const entry = {
+            from: name,
+            to: 'Todos',
+            text: 'entra na sala...',
+            type: 'status',
+            time: dayjs().format('HH:mm:ss')
+        }
+
+
 
         const existName = await db.collection('participants').findOne({ name })
 
         if (existName) return res.status(409).send("Nome ja cadastrado, por favor tente outro !")
         if (!name) return res.status(422).send("O nome deve ser prenchido !!")
 
-        const novoParticipante = {
+        const newParticipant = {
             name,
             lastStatus: Date.now()
         }
 
-        await db.collection("participants").insertOne(novoParticipante)
+        await db.collection("participants").insertOne(newParticipant)
+        await db.collection("messages").insertOne(entry)
 
-        res.status(201).send(novoParticipante)
+        res.status(201).send(newParticipant)
     } catch (erro) {
 
         console.log(erro)
@@ -45,29 +76,65 @@ app.post('/participants', async (req, res) => {
 
 })
 
-app.get('/participants', (req, res) => {
+app.get('/participants', async (req, res) => {
 
-    db.collection("participants").find().toArray()
+    const participants = await db.collection("participants").find().toArray()
 
-        .then((result) => { res.send(result) })
-        .catch((erro) => { return console.log(erro.message) })
+    if (participants.length === 0) return res.send({})
+
+    try {
+
+        res.send(participants)
+
+    } catch (erro) { return console.log(erro.message) }
 
 })
 
 
-app.post('/messages', (req, res) => {
+app.post('/messages', async (req, res) => {
 
-    const { to, text, type } = req.body
+    const { text, to, type } = req.body
 
-    if (to === "" || text === "" || type !== "private_message" || type !== "message") {
-        return res.sendStatus(422)
+    const validation = messageSchema.validate(req.body, { abortEarly: false })
+
+    if (validation.error) {
+        const errors = validation.error.details.map((det) => det.message);
+        return res.status(422).send(errors);
     }
 
+    // const existName = await db.collection('message').findOne({ to })
+    // if(!existName) return res.status(422).send("Não encontrado")
 
-    res.sendStatus(201)
+    try {
+
+        const newMessage = {
+            text,
+            to,
+            type,
+            time: dayjs().format('HH:mm:ss')
+        }
+
+        await db.collection("messages").insertOne(newMessage)
+
+        res.sendStatus(201)
+
+    } catch (erro) {
+        return console.log(erro)
+    }
+
 })
 
-app.get('/messages', (req, res) => {
+app.get('/messages', async (req, res) => {
+
+
+
+    const messages = await db.collection("massages").find().toArray()
+
+    try {
+
+        res.status(201).send(messages)
+
+    } catch (erro) { return console.log(erro) }
 
 })
 
