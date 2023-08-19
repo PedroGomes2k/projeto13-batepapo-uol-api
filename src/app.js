@@ -104,7 +104,7 @@ app.post('/messages', async (req, res) => {
 
     const existName = await db.collection('messages').findOne({ to })
     if (!existName) return res.status(422).send("Não encontrado")
-
+    //
     try {
 
         const newMessage = {
