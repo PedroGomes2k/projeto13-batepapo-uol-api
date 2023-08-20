@@ -1,6 +1,6 @@
 import express, { json } from "express"
 import cors from "cors"
-import { MongoClient } from "mongodb"
+import { MongoClient, ObjectId } from "mongodb"
 import dotenv from "dotenv"
 import dayjs from "dayjs"
 import Joi from "joi"
@@ -107,10 +107,9 @@ app.post('/messages', async (req, res) => {
     const existName = await db.collection('messages').findOne({ to })
 
     if (!existName) return res.status(422).send("Não encontrado")
-    if (!type !== "message" || "private_message") return res.sendStatus(422)
-    if (!User) return res.sendStatus(422)
 
     try {
+
 
         const newMessage = {
             from: User,
@@ -133,16 +132,19 @@ app.post('/messages', async (req, res) => {
 
 app.get('/messages', async (req, res) => {
 
-    const user = req.headers.user
+    const User = req.headers.user
 
 
     try {
 
-        const messages = await db.collection("massages").find({ $or: [{ to }, { from }] }).toArray()
+        const privateMessage = await db.collection("messages").find({ $or: [{ type: "message", to: User }, { type: "private_message", from: User }] }).toArray()
+        const allMessege = await db.collection("messages").find({ to: "Todos" })
 
-        console.log(user)
-        console.log(messages)
-        res.status(201).send(messages)
+        let message = privateMessage.concat(allMessege)
+        
+       
+        res.status(201).send(message)
+
 
     } catch (erro) { return res.sendStatus(422) }
 
@@ -151,18 +153,18 @@ app.get('/messages', async (req, res) => {
 app.post('/status', async (req, res) => {
 
     const { name } = req.body
-    const { id } = req.params
     const User = req.headers.user
 
     try {
 
-        if (!User) return res.status(404).send("User não passado")
+        //if (!User) return res.status(404).send("User não passado")
 
         const existName = await db.collection('participants').findOne({ name })
-        if (User !== existName) return res.status(404).send("O User é diferente")
+        //  if (User !== existName) return res.status(404).send("O User é diferente")
 
-        const newTime = await db.collection('participants').upadateOne({ _id: new ObjectId(id) }, { lastStatus: Date.now() })
+        const newTime = await db.collection('participants').upadateOne({ name: User }, { $set: { lastStatus: Date.now() } })
         console.log(newTime)
+        console.log(existName)
         return res.sendStatus(200)
 
     } catch { return res.status(404).send("Catch") }
