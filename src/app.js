@@ -105,9 +105,8 @@ app.post('/messages', async (req, res) => {
     }
 
     const existName = await db.collection('messages').findOne({ to })
-    console.log(existName)
-    if (!existName) return res.status(422).send("Não encontrado")
 
+    if (!existName) return res.status(422).send("Não encontrado")
 
 
     try {
@@ -133,15 +132,39 @@ app.post('/messages', async (req, res) => {
 
 app.get('/messages', async (req, res) => {
 
+    const user = req.headers.user
+
 
     try {
-        const messages = await db.collection("massages").find().toArray()
 
+        const messages = await db.collection("massages").find({ $or: [{ to }, { from }] }).toArray()
+
+        console.log(user)
         console.log(messages)
         res.status(201).send(messages)
 
     } catch (erro) { return res.sendStatus(422) }
 
+})
+
+app.post('/status', async (req, res) => {
+
+    const { name } = req.body
+    const {id} = req.params
+    const User = req.headers.user
+
+    try {
+
+        if (!User) return res.status(404).send("User não passado")
+
+        const existName = await db.collection('participants').findOne({ name })
+        if(User !== existName)  return res.status(404).send("O User é diferente")
+
+        const newTime = await db.collection('participants').upadateOne({ _id: new ObjectId(id) }, { lastStatus: Date.now() })
+        console.log(newTime)
+        return res.sendStatus(200)
+
+    } catch { return res.status(404).send("Catch") }
 })
 
 const server = (5000)
