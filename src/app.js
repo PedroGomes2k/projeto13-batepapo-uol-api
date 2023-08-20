@@ -133,14 +133,13 @@ app.post('/messages', async (req, res) => {
 app.get('/messages', async (req, res) => {
 
     const User = req.headers.user
-    let limit = Number(req.query.limit)
+    let limit = parseInt(req.query.limit)
 
 
     try {
 
         const messages = await db.collection("messages").find({ $or: [{ type: "message", to: User }, { type: "private_message", from: User }, { to: "Todos" }] }).limit(limit).toArray()
        
-        console.log(limit)
        
         res.status(201).send(messages)
 
