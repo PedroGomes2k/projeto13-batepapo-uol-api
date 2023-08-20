@@ -94,6 +94,8 @@ app.get('/participants', async (req, res) => {
 app.post('/messages', async (req, res) => {
 
     const { text, to, type } = req.body
+    const User = req.headers.user;
+
 
     const validation = messageSchema.validate(req.body, { abortEarly: false })
 
@@ -103,11 +105,15 @@ app.post('/messages', async (req, res) => {
     }
 
     const existName = await db.collection('messages').findOne({ to })
+    console.log(existName)
     if (!existName) return res.status(422).send("Não encontrado")
-    //
+
+
+
     try {
 
         const newMessage = {
+            from: User,
             to,
             text,
             type,
@@ -115,6 +121,7 @@ app.post('/messages', async (req, res) => {
         }
 
         await db.collection("messages").insertOne(newMessage)
+
 
         res.sendStatus(201)
 
@@ -127,14 +134,13 @@ app.post('/messages', async (req, res) => {
 app.get('/messages', async (req, res) => {
 
 
-
-    const messages = await db.collection("massages").find().toArray()
-
     try {
+        const messages = await db.collection("massages").find().toArray()
 
+        console.log(messages)
         res.status(201).send(messages)
 
-    } catch (erro) { return console.log(erro) }
+    } catch (erro) { return res.sendStatus(422) }
 
 })
 
