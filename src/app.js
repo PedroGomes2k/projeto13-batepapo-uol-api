@@ -107,7 +107,8 @@ app.post('/messages', async (req, res) => {
     const existName = await db.collection('messages').findOne({ to })
 
     if (!existName) return res.status(422).send("Não encontrado")
-
+    if (!type !== "message" || "private_message") return res.sendStatus(422)
+    if (!User) return res.sendStatus(422)
 
     try {
 
@@ -150,7 +151,7 @@ app.get('/messages', async (req, res) => {
 app.post('/status', async (req, res) => {
 
     const { name } = req.body
-    const {id} = req.params
+    const { id } = req.params
     const User = req.headers.user
 
     try {
@@ -158,7 +159,7 @@ app.post('/status', async (req, res) => {
         if (!User) return res.status(404).send("User não passado")
 
         const existName = await db.collection('participants').findOne({ name })
-        if(User !== existName)  return res.status(404).send("O User é diferente")
+        if (User !== existName) return res.status(404).send("O User é diferente")
 
         const newTime = await db.collection('participants').upadateOne({ _id: new ObjectId(id) }, { lastStatus: Date.now() })
         console.log(newTime)
