@@ -104,7 +104,7 @@ app.post('/messages', async (req, res) => {
 
     const existName = await db.collection('messages').findOne({ to })
 
-    if (!existName) return res.status(422).send("Não encontrado")
+    if (!existName || !User) return res.status(422).send("Não encontrado")
 
     try {
 
@@ -115,6 +115,7 @@ app.post('/messages', async (req, res) => {
             type,
             time: dayjs().format('HH:mm:ss')
         }
+
 
         await db.collection("messages").insertOne(newMessage)
 
@@ -136,7 +137,7 @@ app.get('/messages', async (req, res) => {
 
     try {
 
-        if (limit === 0 || limit <= 0 || limit === NaN) return res.sendStatus(422)
+        if (limit === 0 || limit <= 0 || limit === NaN || limit === "string") return res.sendStatus(422)
 
         const messages = await db.collection("messages").find(
             {
@@ -147,31 +148,29 @@ app.get('/messages', async (req, res) => {
                 ]
             }).toArray()
 
-        const heigthLimit = messages.slice(-(limit)).reverse()
+        const heigthLimit = messages.slice(-100).reverse()
 
         res.status(200).send(heigthLimit)
     } catch (erro) { return res.sendStatus(422) }
 
 })
-
+// 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
 app.post('/status', async (req, res) => {
 
     const User = req.headers.user
 
     try {
 
-        if (!User) return res.status(404).send("User não passado")
-
         const existName = await db.collection("participants").findOne({ name: User })
 
-        if (User !== existName.name) return res.status(404).send("user é diferente do name")
+        if (User !== existName.name || !User) return res.sendStatus(404)
 
         await db.collection("participants").updateOne({ name: User }, { $set: { lastStatus: Date.now() } })
 
 
-        return res.status(201).send("Atualização realizada")
+        return res.sendStatus(201)
 
-    } catch { return res.status(404).send("Catch") }
+    } catch { return res.sendStatus(404) }
 })
 
 async function logOut() {
@@ -184,7 +183,7 @@ async function logOut() {
 
         const { lastStatus, name } = inactiveUser
 
-        if (lastStatus > 15000) {
+        if (lastStatus > 150000) {
 
             const timeStatus = dayjs().format('HH:mm:ss')
 
