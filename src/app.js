@@ -136,17 +136,19 @@ app.get('/messages', async (req, res) => {
 
 
     try {
-        
-        if(!User) return res.sendStatus(422)
 
-        const messages = await db.collection("messages").find({$or: [
+        if (!User) return res.sendStatus(422)
 
-                    { type: "message" },
-                    { type: "private_message" },
-                    { to: User },
-                    { from: User }
-                ]
-            }).toArray()
+        const messages = await db.collection("messages").find({
+            $or: [
+
+                { type: "message" },
+                { to: "Todos" },
+                { to: User },
+                { from: User }
+
+            ]
+        }).toArray()
 
         if (!limit) return res.status(200).send(messages)
 
