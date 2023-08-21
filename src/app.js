@@ -108,7 +108,6 @@ app.post('/messages', async (req, res) => {
 
     try {
 
-
         const newMessage = {
             from: User,
             to,
@@ -131,31 +130,33 @@ app.post('/messages', async (req, res) => {
 app.get('/messages', async (req, res) => {
 
     const User = req.headers.user
+
     let limit = parseInt(req.query.limit)
 
+    
     try {
 
-        if (limit === 0 || limit <= 0 || limit === "string") return res.status(422).send("erro com o limit")
+        if (limit === 0 || limit <= 0 || limit === NaN) return res.sendStatus(422)
 
         const messages = await db.collection("messages").find(
             {
-                $or: [{ type: "message", to: User },
-                { type: "private_message", from: User },
-                { to: "Todos" }]
-            }
-        ).limit(limit).toArray()
+                $or: [
+                    { type: "message", to: User },
+                    { type: "private_message", from: User },
+                    { to: "Todos" }
+                ]
+            } ).toArray()
+
+        messages.slice(-1*limit)   
 
         res.status(200).send(messages)
-
     } catch (erro) { return res.sendStatus(422) }
 
 })
 
 app.post('/status', async (req, res) => {
 
-
     const User = req.headers.user
-
 
     try {
 
@@ -183,7 +184,7 @@ async function logOut() {
 
         const { lastStatus, name } = inactiveUser
 
-        if (lastStatus > 1500000) {
+        if (lastStatus > 15000) {
 
             const timeStatus = dayjs().format('HH:mm:ss')
 
@@ -205,7 +206,7 @@ async function logOut() {
 
 
 
-//setInterval(logOut, 15000);
+setInterval(logOut, 15000);
 
 const server = (5000)
 app.listen(server, () => console.log(`Servidor funcionando na porta ${server}`))
