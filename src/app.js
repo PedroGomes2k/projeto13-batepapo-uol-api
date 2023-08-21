@@ -3,7 +3,7 @@ import cors from "cors"
 import { MongoClient, ObjectId } from "mongodb"
 import dotenv from "dotenv"
 import dayjs from "dayjs"
-import Joi, { number } from "joi"
+import Joi from "joi"
 
 
 const app = express()
@@ -148,7 +148,7 @@ app.get('/messages', async (req, res) => {
 
         if (!limit) return res.status(200).send(messages)
 
-        if (limit <= 0 || limit !== Number) return res.sendStatus(422)
+        if (limit <= 0 || isNaN(limit) === true) return res.sendStatus(422)
 
         const limitChose = messages.slice(-parseInt(limit)).reverse()
 
@@ -187,7 +187,7 @@ async function logOut() {
 
         const { lastStatus, name } = inactiveUser
 
-        if (lastStatus > 150000) {
+        if (lastStatus > 10000) {
 
             const timeStatus = dayjs().format('HH:mm:ss')
 
