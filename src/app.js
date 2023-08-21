@@ -136,13 +136,13 @@ app.get('/messages', async (req, res) => {
 
 
     try {
+        
+        if(!User) return res.sendStatus(422)
 
-        const messages = await db.collection("messages").find(
-            {
-                $or: [
+        const messages = await db.collection("messages").find({$or: [
+
                     { type: "message" },
                     { type: "private_message" },
-                    { to: "Todos" },
                     { to: User },
                     { from: User }
                 ]
