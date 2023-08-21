@@ -131,9 +131,9 @@ app.get('/messages', async (req, res) => {
 
     const User = req.headers.user
 
-    let limit = parseInt(req.query.limit)
+    let limit = parseInt(req.query)
 
-    
+
     try {
 
         if (limit === 0 || limit <= 0 || limit === NaN) return res.sendStatus(422)
@@ -145,11 +145,11 @@ app.get('/messages', async (req, res) => {
                     { type: "private_message", from: User },
                     { to: "Todos" }
                 ]
-            } ).toArray()
+            }).toArray()
 
-        messages.slice(-1*limit)   
+        const heigthLimit = messages.slice(-(limit)).reverse()
 
-        res.status(200).send(messages)
+        res.status(200).send(heigthLimit)
     } catch (erro) { return res.sendStatus(422) }
 
 })
