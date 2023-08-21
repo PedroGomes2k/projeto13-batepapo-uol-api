@@ -138,10 +138,11 @@ app.get('/messages', async (req, res) => {
 
     try {
 
+
         const messages = await db.collection("messages").find({ $or: [{ type: "message", to: User }, { type: "private_message", from: User }, { to: "Todos" }] }).limit(limit).toArray()
-       
-       
-        res.status(201).send(messages)
+
+
+        res.status(200).send(messages)
 
     } catch (erro) { return res.sendStatus(422) }
 
@@ -150,19 +151,23 @@ app.get('/messages', async (req, res) => {
 app.post('/status', async (req, res) => {
 
     const { name } = req.body
+    const { id } = req.params
     const User = req.headers.user
+
 
     try {
 
-        //if (!User) return res.status(404).send("User não passado")
+        if (!User) return res.status(404).send("User não passado")
+
 
         const existName = await db.collection('participants').findOne({ name })
-        //  if (User !== existName) return res.status(404).send("O User é diferente")
 
-        const newTime = await db.collection('participants').upadateOne({ name: User }, { $set: { lastStatus: Date.now() } })
-        console.log(newTime)
-        console.log(existName)
-        return res.sendStatus(200)
+        if (User !== existName.name) return res.status(404).send("user é diferente do name")
+
+        await db.collection('participants').updateOne({ name }, { $set: { lastStatus: Date.now() } })
+
+
+        return res.status(200).send("Atualização realizada")
 
     } catch { return res.status(404).send("Catch") }
 })
