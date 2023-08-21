@@ -139,7 +139,7 @@ app.get('/messages', async (req, res) => {
     try {
 
         if (limit === 0 || limit <= 0 || limit === "string") return res.status(422).send("erro com o limit")
-        
+
         const messages = await db.collection("messages").find({ $or: [{ type: "message", to: User }, { type: "private_message", from: User }, { to: "Todos" }] }).limit(limit).toArray()
 
 
@@ -172,6 +172,40 @@ app.post('/status', async (req, res) => {
 
     } catch { return res.status(404).send("Catch") }
 })
+
+async function logOut() {
+
+    const time = Date.now()
+    const inactive = await db.collection("participants").find().toArray()
+
+
+    for (const inactiveUser of inactive) {
+
+        const { lastStatus, name } = inactiveUser
+
+        if (lastStatus > 10000) {
+
+            const timeStatus = dayjs().format('HH:mm:ss')
+
+            await db.collection("participants").deleteOne({ name })
+
+            const outMessage = {
+                from: name,
+                to: 'Todos',
+                text: 'sai da sala...',
+                type: 'status',
+                time
+            }
+
+            await db.collection("messages").insertOne(outMessage)
+
+        }
+    }
+}
+
+
+
+setInterval(logOut, 15000);
 
 const server = (5000)
 app.listen(server, () => console.log(`Servidor funcionando na porta ${server}`))
