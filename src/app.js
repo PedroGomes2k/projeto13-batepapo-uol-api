@@ -140,9 +140,11 @@ app.get('/messages', async (req, res) => {
         const messages = await db.collection("messages").find(
             {
                 $or: [
-                    { type: "message", to: User },
-                    { type: "private_message", from: User },
-                    { to: "Todos" }
+                    { type: "message" },
+                    { type: "private_message" },
+                    { to: "Todos" },
+                    { to: User },
+                    { from: User }
                 ]
             }).toArray()
 
@@ -150,10 +152,10 @@ app.get('/messages', async (req, res) => {
 
         if (limit <= 0 || isNaN(limit) === true) return res.sendStatus(422)
 
-        const limitChose = messages.slice(-parseInt(limit)).reverse()
+        const limitChose = messages.slice(-parseInt(limit))
 
         res.status(200).send(limitChose)
-        
+
     } catch (erro) { return res.sendStatus(422) }
 })
 
@@ -175,7 +177,7 @@ app.post('/status', async (req, res) => {
     } catch { return res.sendStatus(404) }
 })
 
-// manter o user verificado
+
 
 async function logOut() {
 
