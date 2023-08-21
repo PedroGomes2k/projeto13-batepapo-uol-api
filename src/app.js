@@ -138,7 +138,8 @@ app.get('/messages', async (req, res) => {
 
     try {
 
-
+        if (limit === 0 || limit <= 0 || limit === "string") return res.status(422).send("erro com o limit")
+        
         const messages = await db.collection("messages").find({ $or: [{ type: "message", to: User }, { type: "private_message", from: User }, { to: "Todos" }] }).limit(limit).toArray()
 
 
@@ -167,7 +168,7 @@ app.post('/status', async (req, res) => {
         await db.collection('participants').updateOne({ name }, { $set: { lastStatus: Date.now() } })
 
 
-        return res.status(200).send("Atualização realizada")
+        return res.status(201).send("Atualização realizada")
 
     } catch { return res.status(404).send("Catch") }
 })
