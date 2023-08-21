@@ -30,7 +30,7 @@ const participantSchema = Joi.object({
 const messageSchema = Joi.object({
     to: Joi.string().required(),
     text: Joi.string().required(),
-    type: Joi.string().required()
+    type: Joi.string().valid("message", "private_message").required()
 })
 
 app.post('/participants', async (req, res) => {
@@ -52,8 +52,6 @@ app.post('/participants', async (req, res) => {
             type: 'status',
             time: dayjs().format('HH:mm:ss')
         }
-
-        console.log(entry)
 
         const existName = await db.collection('participants').findOne({ name })
 
@@ -135,13 +133,17 @@ app.get('/messages', async (req, res) => {
     const User = req.headers.user
     let limit = parseInt(req.query.limit)
 
-
     try {
 
         if (limit === 0 || limit <= 0 || limit === "string") return res.status(422).send("erro com o limit")
 
-        const messages = await db.collection("messages").find({ $or: [{ type: "message", to: User }, { type: "private_message", from: User }, { to: "Todos" }] }).limit(limit).toArray()
-
+        const messages = await db.collection("messages").find(
+            {
+                $or: [{ type: "message", to: User },
+                { type: "private_message", from: User },
+                { to: "Todos" }]
+            }
+        ).limit(limit).toArray()
 
         res.status(200).send(messages)
 
@@ -151,8 +153,7 @@ app.get('/messages', async (req, res) => {
 
 app.post('/status', async (req, res) => {
 
-    const { name } = req.body
-    const { id } = req.params
+
     const User = req.headers.user
 
 
@@ -160,12 +161,11 @@ app.post('/status', async (req, res) => {
 
         if (!User) return res.status(404).send("User não passado")
 
-
-        const existName = await db.collection('participants').findOne({ name })
+        const existName = await db.collection("participants").findOne({ name: User })
 
         if (User !== existName.name) return res.status(404).send("user é diferente do name")
 
-        await db.collection('participants').updateOne({ name }, { $set: { lastStatus: Date.now() } })
+        await db.collection("participants").updateOne({ name: User }, { $set: { lastStatus: Date.now() } })
 
 
         return res.status(201).send("Atualização realizada")
@@ -183,7 +183,7 @@ async function logOut() {
 
         const { lastStatus, name } = inactiveUser
 
-        if (lastStatus > 10000) {
+        if (lastStatus > 1500000) {
 
             const timeStatus = dayjs().format('HH:mm:ss')
 
@@ -194,7 +194,7 @@ async function logOut() {
                 to: 'Todos',
                 text: 'sai da sala...',
                 type: 'status',
-                time
+                time: timeStatus
             }
 
             await db.collection("messages").insertOne(outMessage)
@@ -205,7 +205,7 @@ async function logOut() {
 
 
 
-setInterval(logOut, 15000);
+//setInterval(logOut, 15000);
 
 const server = (5000)
 app.listen(server, () => console.log(`Servidor funcionando na porta ${server}`))
