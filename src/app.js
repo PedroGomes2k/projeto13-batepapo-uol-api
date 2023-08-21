@@ -3,7 +3,7 @@ import cors from "cors"
 import { MongoClient, ObjectId } from "mongodb"
 import dotenv from "dotenv"
 import dayjs from "dayjs"
-import Joi from "joi"
+import Joi, { number } from "joi"
 
 
 const app = express()
@@ -132,12 +132,10 @@ app.get('/messages', async (req, res) => {
 
     const User = req.headers.user
 
-    let limit = parseInt(req.query)
+    const { limit } = req.query
 
 
     try {
-
-        if (limit === 0 || limit <= 0 || limit === NaN || limit === "string") return res.sendStatus(422)
 
         const messages = await db.collection("messages").find(
             {
@@ -148,13 +146,17 @@ app.get('/messages', async (req, res) => {
                 ]
             }).toArray()
 
-        const heigthLimit = messages.slice(-100).reverse()
+        if (!limit) return res.status(200).send(messages)
 
-        res.status(200).send(heigthLimit)
+        if (limit <= 0 || limit !== Number) return res.sendStatus(422)
+
+        const limitChose = messages.slice(-parseInt(limit)).reverse()
+
+        res.status(200).send(limitChose)
+        
     } catch (erro) { return res.sendStatus(422) }
-
 })
-// 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
+
 app.post('/status', async (req, res) => {
 
     const User = req.headers.user
@@ -172,6 +174,8 @@ app.post('/status', async (req, res) => {
 
     } catch { return res.sendStatus(404) }
 })
+
+// manter o user verificado
 
 async function logOut() {
 
